@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  # ------------------------------------
+  # 1. Django DRF バックエンド
+  # ------------------------------------
+  backend:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.dev
+    container_name: django_backend
+    # Django開発サーバーの起動 (ホットリロード有効)
+    command: python /app/src/manage.py runserver 0.0.0.0:8000
+    volumes:
+      # ホストPCのコードをコンテナ内の/app/srcにマウント
+      - ./services/src:/app/src
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - redis # Celery BrokerとしてRedisに依存
+
+  # ------------------------------------
+  # 2. Vite-Vue フロントエンド
+  # ------------------------------------
+  frontend:
+    build:
+      context: ./accounts
+      dockerfile: Dockerfile.dev
+    container_name: vue_frontend
+    # Vue開発サーバーの起動
+    command: npm run dev -- --host 0.0.0.0
+    volumes:
+      # ホストPCのコードをコンテナ内の/appにマウント
+      - ./accounts:/app
+      # Node Modulesをボリューム化してビルド高速化
+      - /app/node_modules
+    ports:
+      # Viteのデフォルトポートをホストに公開
+      - "5173:5173"
+    env_file:
+      - ./.env.dev
+    
+  # ------------------------------------
+  # 3. Redis (Celery Broker & Cache)
+  # ------------------------------------
+  redis:
+    image: redis:7-alpine # 軽量な公式イメージ
+    container_name: redis_broker
+    # 外部からアクセスしないため、portsは通常不要
+    
+  # ------------------------------------
+  # 4. Celery Worker (非同期タスク処理)
+  # ------------------------------------
+  celery_worker:
+    # Djangoと同じPython環境が必要なため、同じビルド設定を流用
+    build:
+      context: ./services
+      dockerfile: Dockerfile.dev
+    container_name: celery_worker
+    # Celery Workerの起動コマンド
+    command: celery -A your_project_name worker -l info 
+    # Djangoのコードを参照
+    volumes:
+      - ./services/src:/app/src
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - services
+      - redis
+
+# データの永続化が必要な場合は volumes を定義 (この構成ではDBをSQLiteとし、永続化を省略)
+# SQLiteはファイルベースのため、コードと一緒にマウントされたディレクトリ内にファイルが作成されます

@@ -1,0 +1,32 @@
+# ------------------------------------
+# Django DRF 開発環境 (backend)
+# ------------------------------------
+FROM python:3.11-slim
+
+# OSの依存関係をインストール (SQLiteのライブラリなど)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    # SQLite3のライブラリ（Python内蔵のものとは別に用意することがあるため）
+    sqlite3 libsqlite3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# ワークディレクトリの設定
+WORKDIR /app
+
+# 依存関係ファイルのコピーとインストール
+COPY requirements.dev.txt /app/
+RUN pip install --no-cache-dir -r requirements.dev.txt
+
+# コードはvolumesでマウントするため、ここではコピーしない（ホットリロードのため）
+
+# ポートの公開（外部にはdocker-composeで公開）
+EXPOSE 8000
+
+# コンテナ起動時に、Django開発サーバーを起動
+# ホットリロードのため、通常は 'python manage.py runserver 0.0.0.0:8000' が使われるが、
+# VSCodeのDev Containerや外部ツールを使用する場合はコマンドをdocker-composeに移動
+CMD ["tail", "-f", "/dev/null"] 
+# 開発中はコンテナを起動し続けるためのダミーコマンド。
+# 実際のサーバー起動コマンドはdocker-compose.ymlでvolumesマウント後に実行します。

@@ -1,0 +1,17 @@
+# ------------------------------------
+# Vite-Vue 開発環境 (frontend)
+# ------------------------------------
+FROM node:18-alpine
+
+WORKDIR /app
+
+# 依存関係ファイルのコピーとインストール
+COPY package.json /app/
+RUN npm install
+
+# ポートの公開 (Vite Dev Serverのデフォルト)
+EXPOSE 5173
+
+# コードはvolumesでマウントするため、ここではコピーしない
+# CMDはdocker-compose.ymlで上書きし、 'npm run dev' を実行します。
+CMD ["tail", "-f", "/dev/null"]
