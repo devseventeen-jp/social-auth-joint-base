@@ -29,8 +29,9 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "corsheaders",
-    "services.authif",
-    "services.core",
+#    "social_django",
+    "authif",
+    "core",
 ]
 
 MIDDLEWARE = [
@@ -44,7 +45,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "services.core.urls"
+ROOT_URLCONF = "core.urls"
 
 TEMPLATES = [
     {
@@ -62,7 +63,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "services.core.wsgi.application"
+WSGI_APPLICATION = "core.wsgi.application"
 
 # ------------------------------------------------------------------
 # Database
