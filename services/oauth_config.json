@@ -1,0 +1,12 @@
+{
+  "google": {
+    "auth_url": "http://localhost:8000/auth/login/google/",
+    "callback_url": "http://localhost:8000/api/auth/google/callback/"
+
+  },
+  "facebook": {
+    "auth_url": "http://localhost:8000/auth/login/facebook/",
+    "callback_url": "http://localhost:8000/api/auth/facebook/callback/"
+
+  }
+}

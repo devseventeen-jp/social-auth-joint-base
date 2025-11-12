@@ -108,5 +108,20 @@ def register_profile(request):
     })
 
 # enable providers
-def get_enable_providers(request):
-    return JsonResponse(settings.OAUTH_PROVIDERS)
+#def get_enable_providers(request):
+#    return JsonResponse(settings.OAUTH_PROVIDERS)
+
+def get_enabled_providers(request):
+    """
+    Return a list of enabled OAuth providers and their URLs for the frontend.
+    """
+    providers = []
+
+    for name, data in settings.OAUTH_PROVIDERS.items():
+        providers.append({
+            "name": name,
+            "auth_url": data.get("auth_url"),
+            "callback_url": data.get("callback_url"),
+        })
+
+    return JsonResponse({"providers": providers})

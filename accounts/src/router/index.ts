@@ -12,7 +12,9 @@ const routes = [
 
 const router = createRouter({
   history: createWebHistory(),
-  routes,
+  routes: [
+    { path: '/', component: Dashboard },
+    { path: '/login', component: Login },
 })
 
 router.beforeEach(async (to, from, next) => {

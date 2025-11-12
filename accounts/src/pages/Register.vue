@@ -17,10 +17,10 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from "vue"
 import { useRouter, useRoute } from "vue-router"
-import api from "@/services/api.js"  // axios instance with withCredentials=true
+import api from "@/services/api.ts"  // axios instance with withCredentials=true
 
 const router = useRouter()
 const route = useRoute()

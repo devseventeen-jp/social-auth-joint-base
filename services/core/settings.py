@@ -97,17 +97,16 @@ CORS_ALLOW_CREDENTIALS = True
 # ------------------------------------------------------------------
 # OAuth provider configuration (hybrid: local JSON + Secret Manager)
 # ------------------------------------------------------------------
-OAUTH_PROVIDERS = load_providers(
-    local_path=os.getenv("OAUTH_CONFIG_PATH", BASE_DIR / "env" / "oauth_providers.json"),
-    gcp_project=os.getenv("GCP_PROJECT", None),
-)
+OAUTH_PROVIDERS = load_providers()
 
 # Each provider object looks like:
 # {
-#   "id": "google",
-#   "client_id": "...",
-#   "client_secret": "...",
-#   "enabled": true
+#   {   "name": "google",
+#       "client_id": "...",
+#       "client_secret": "...",
+#       "auth_url": "http://...",
+#       "callback_url": "http://..."
+#   }
 # }
 
 # ------------------------------------------------------------------

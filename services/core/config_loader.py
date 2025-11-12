@@ -1,5 +1,6 @@
 import os
 import json
+from pathlib import Path
 from typing import Dict, Any
 
 try:
@@ -8,21 +9,41 @@ except ImportError:
     secretmanager = None
 
 
-def load_providers(local_path: str, gcp_project: str | None = None) -> Dict[str, Any]:
+def load_provider_configs() -> Dict[str, Any]:
     """
     Load OAuth provider configuration from local JSON or Secret Manager.
     The source is determined by whether USE_SECRET_MANAGER is enabled.
     """
-    use_secret_manager = os.getenv("USE_SECRET_MANAGER", "0") == "1"
 
+    base_dir = Path(__file__).resolve().parent.parent
+    config_path = base_dir / "oauth_config.json"
+    secret_path = base_dir / "env" / "oauth_providers.json"
+
+    # --- Step 1: Read config info (non-secret, URLs etc.) ---
+    config_data = {}
+    if config_path.exists():
+        with open(config_path, "r", encoding="utf-8") as f:
+            config_data = json.load(f)
+
+    # --- Step 2: Determine which source to use for credentials ---
+    use_secret_manager = os.getenv("USE_SECRET_MANAGER", "0") == "1"
+    gcp_project = os.getenv("GCP_PROJECT", "")
     if use_secret_manager:
         if secretmanager is None:
             raise RuntimeError("google-cloud-secret-manager is not installed.")
         providers = _load_from_secret_manager(project_id=gcp_project)
     else:
-        providers = _load_from_local_json(json_path=local_path)
+        providers = _load_from_local_json(json_path=secret_path)
 
-    return _normalize_providers(providers)
+    # --- Step 3: Merge both sets (config + secrets) ---
+    provider_configs = {}
+    for provider, cfg in providers.items():
+        provider_configs[provider] = {
+            **config_data.get(provider, {}),
+            **cfg
+        }
+
+    return provider_configs
 
 
 def _load_from_secret_manager(project_id: str) -> Dict[str, Any]:
@@ -34,16 +55,20 @@ def _load_from_secret_manager(project_id: str) -> Dict[str, Any]:
         raise ValueError("GCP_PROJECT environment variable is required when using Secret Manager.")
 
     client = secretmanager.SecretManagerServiceClient()
-    name = f"projects/{project_id}/secrets/oauth_providers/versions/latest"
-    response = client.access_secret_version(request={"name": name})
-    payload = response.payload.data.decode("utf-8")
+    providers = {}
 
-    try:
-        data = json.loads(payload)
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Invalid JSON in Secret Manager payload: {e}")
+    possible_providers = ["google", "facebook", "twitter", "github"]
 
-    return data
+    for provider in possible_providers:
+        secret_name = f"projects/{project_id}/secrets/{provider}_oauth_credentials/versions/latest"
+        try:
+            response = client.access_secret_version(name=secret_name)
+            payload = response.payload.data.decode("utf-8")
+            providers[provider] = json.loads(payload)
+        except Exception as e:
+            print(f"[WARN] Failed to load secret for {provider}: {e}")
+
+    return providers
 
 
 def _load_from_local_json(json_path: str) -> Dict[str, Any]:
@@ -56,43 +81,36 @@ def _load_from_local_json(json_path: str) -> Dict[str, Any]:
 
     with open(json_path, "r", encoding="utf-8") as f:
         try:
-            data = json.load(f)
+            raw = json.load(f)
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON format in local file: {e}")
 
-    return data
+    # Remove disabled providers
+    return {
+        name: data
+        for name, data in raw.items()
+        if data.get("enabled", True)
+    }
 
-
-def _normalize_providers(data: Dict[str, Any]) -> Dict[str, Any]:
+def load_providers() -> Dict[str, Any]:
     """
-    Normalize structure of provider credentials.
-    This allows Secret Manager and local JSON to have slightly different structures.
-    Expected output:
-        {
-            "google": {
-                "id": "...",
-                "secret": "...",
-                "enabled": True
-            },
-            "github": { ... }
-        }
+    Return only enabled providers, merged with static config data if needed.
     """
-    normalized = {}
+    all_providers = load_provider_configs()
 
-    for provider, config in data.items():
-        normalized[provider] = {
-            "id": config.get("client_id") or config.get("id"),
-            "secret": config.get("client_secret") or config.get("secret"),
-            "enabled": bool(config.get("enabled", True))
-        }
+    # enabled == true のみを残す
+    enabled = {
+        name: info
+        for name, info in all_providers.items()
+        if info.get("enabled", True)
+    }
 
-    return normalized
-
+    return enabled
 
 # Optional: quick test runner
 if __name__ == "__main__":
     try:
-        result = load_providers()
+        result = load_provider_configs()
         print(json.dumps(result, indent=2))
     except Exception as e:
         print(f"Error: {e}")

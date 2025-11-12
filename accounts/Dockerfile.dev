@@ -7,7 +7,7 @@ WORKDIR /app
 
 # 依存関係ファイルのコピーとインストール
 COPY package.json /app/
-RUN npm install
+RUN npm install --save-dev typescript vue-tsc @types/node
 
 # ポートの公開 (Vite Dev Serverのデフォルト)
 EXPOSE 5173

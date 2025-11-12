@@ -1,45 +1,48 @@
 <template>
-  <div class="login-container">
-    <h2>Sign in to Continue</h2>
-    <div class="buttons">
-      <AuthButton
-        v-for="(provider, name) in enabledProviders"
+  <div class="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+    <h1 class="text-2xl font-semibold mb-6">ログイン</h1>
+
+    <div v-if="loading" class="text-gray-500">読み込み中...</div>
+
+    <div v-else>
+      <div
+        v-for="(provider, name) in providers"
         :key="name"
-        :providerName="name"
-        :provider="provider"
-      />
+        class="mb-3"
+      >
+        <button
+          @click="login(name, provider.auth_url)"
+          class="px-5 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600 transition"
+        >
+          {{ name.toUpperCase() }} でログイン
+        </button>
+      </div>
     </div>
+
+    <div v-if="error" class="text-red-500 mt-4">{{ error }}</div>
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted } from "vue"
-import AuthButton from "@/components/AuthButton.vue"
+<script setup lang="ts">
+import { ref, onMounted } from "vue";
+import { getEnabledProviders, redirectToProvider } from "../services/authService.ts";
 
-const providers = ref({})
+const providers = ref({});
+const loading = ref(true);
+const error = ref(null);
 
 onMounted(async () => {
-  const res = await fetch("/env/config.json")
-  providers.value = await res.json()
-})
+  try {
+    const data = await getEnabledProviders();
+    providers.value = data;
+  } catch (err) {
+    error.value = "ログイン情報の取得に失敗しました";
+  } finally {
+    loading.value = false;
+  }
+});
 
-const enabledProviders = computed(() =>
-  Object.fromEntries(
-    Object.entries(providers.value).filter(([_, v]) => v.enabled)
-  )
-)
+function login(name, authUrl) {
+  redirectToProvider(name, authUrl);
+}
 </script>
-
-<style scoped>
-.login-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 10vh;
-}
-.buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-</style>
