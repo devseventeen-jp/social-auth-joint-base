@@ -1,32 +1,32 @@
 # ------------------------------------
-# Django DRF 開発環境 (backend)
+# Django DRF Development environment (backend)
 # ------------------------------------
 FROM python:3.11-slim
 
-# OSの依存関係をインストール (SQLiteのライブラリなど)
+# Install OS dependencies (such as SQLite libraries)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
-    # SQLite3のライブラリ（Python内蔵のものとは別に用意することがあるため）
+    # The SQLite3 library (sometimes provided separately from the one built into Python)
     sqlite3 libsqlite3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# ワークディレクトリの設定
+# Setting the work directory
 WORKDIR /app
 
-# 依存関係ファイルのコピーとインストール
+# Copying and installing dependency files
 COPY requirements.dev.txt /app/
 RUN pip install --no-cache-dir -r requirements.dev.txt
 
-# コードはvolumesでマウントするため、ここではコピーしない（ホットリロードのため）
+# The code is mounted via volumes, so it is not copied here (for hot reloading).
 
-# ポートの公開（外部にはdocker-composeで公開）
+# Port exposure (published externally via docker-compose)
 EXPOSE 8000
 
-# コンテナ起動時に、Django開発サーバーを起動
-# ホットリロードのため、通常は 'python manage.py runserver 0.0.0.0:8000' が使われるが、
-# VSCodeのDev Containerや外部ツールを使用する場合はコマンドをdocker-composeに移動
+# Start the Django development server when the container starts.
+# For hot reload, 'python manage.py runserver 0.0.0.0:8000' is usually used,
+# but when using VSCode Dev Container or external tools, move the command to docker-compose
 CMD ["tail", "-f", "/dev/null"] 
-# 開発中はコンテナを起動し続けるためのダミーコマンド。
-# 実際のサーバー起動コマンドはdocker-compose.ymlでvolumesマウント後に実行します。
+# Dummy command to keep the container running during development.
+# The actual server start command is executed after mounting volumes in docker-compose.yml.

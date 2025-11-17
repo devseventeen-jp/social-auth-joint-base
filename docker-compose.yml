@@ -2,42 +2,42 @@ version: '3.8'
 
 services:
   # ------------------------------------
-  # 1. Django DRF バックエンド
+  # 1. Django DRF backend
   # ------------------------------------
   backend:
     build:
       context: ./services
       dockerfile: Dockerfile.dev
     container_name: django_backend
-    # Django開発サーバーの起動 (ホットリロード有効)
+    # Starting the Django development server (with hot reload enabled)
     command: python /app/manage.py runserver 0.0.0.0:8000
     volumes:
-      # ホストPCのコードをコンテナ内の/app/srcにマウント
+      # Mount the host PC's code to /app/src inside the container
       - ./services:/app
     ports:
       - "8000:8000"
     env_file:
       - ./.env
     depends_on:
-      - redis # Celery BrokerとしてRedisに依存
+      - redis # Depends on Redis as the Celery broker
 
   # ------------------------------------
-  # 2. Vite-Vue フロントエンド
+  # 2. Vite-Vue frontend
   # ------------------------------------
   frontend:
     build:
       context: ./accounts
       dockerfile: Dockerfile.dev
     container_name: vue_frontend
-    # Vue開発サーバーの起動
+    # Starting the Vue development server
     command: npm run dev -- --host 0.0.0.0
     volumes:
-      # ホストPCのコードをコンテナ内の/appにマウント
+      # Mount the host PC's code to /app inside the container
       - ./accounts:/app
-      # Node Modulesをボリューム化してビルド高速化
+      # Speeding up builds by mounting node modules as a volume
       - /app/node_modules
     ports:
-      # Viteのデフォルトポートをホストに公開
+      # Expose Vite's default port to the host
       - "5173:5173"
     env_file:
       - ./.env
@@ -46,22 +46,22 @@ services:
   # 3. Redis (Celery Broker & Cache)
   # ------------------------------------
   redis:
-    image: docker.io/redis:7-alpine # 軽量な公式イメージ
+    image: docker.io/redis:7-alpine # Lightweight official image
     container_name: redis_broker
-    # 外部からアクセスしないため、portsは通常不要
+    # Ports are usually unnecessary since there is no external access.
     
   # ------------------------------------
-  # 4. Celery Worker (非同期タスク処理)
+  # 4. Celery Worker (Asynchronous task processing)
   # ------------------------------------
   celery_worker:
-    # Djangoと同じPython環境が必要なため、同じビルド設定を流用
+    # Since the same Python environment as Django is required, the same build settings are reused.
     build:
       context: ./services
       dockerfile: Dockerfile.dev
     container_name: celery_worker
-    # Celery Workerの起動コマンド
+    # Celery Worker startup command
     command: celery -A your_project_name worker -l info 
-    # Djangoのコードを参照
+    # Refer to Django code
     volumes:
       - ./services:/app
     env_file:
@@ -70,5 +70,5 @@ services:
       - backend
       - redis
 
-# データの永続化が必要な場合は volumes を定義 (この構成ではDBをSQLiteとし、永続化を省略)
-# SQLiteはファイルベースのため、コードと一緒にマウントされたディレクトリ内にファイルが作成されます
+# Define volumes if data persistence is required (in this setup, the DB is SQLite and persistence is omitted)
+# Since SQLite is file-based, the file will be created in the directory mounted with the code
