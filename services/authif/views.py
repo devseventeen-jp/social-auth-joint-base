@@ -1,16 +1,3 @@
-#import yaml
-#from pathlib import Path
-#from django.http import JsonResponse
-#from django.conf import settings
-
-#def get_enabled_providers(request):
-#    config = yaml.safe_load((Path(settings.BASE_DIR) / "config.yaml").read_text())
-#    providers = []
-#    for name, data in config.get("auth_providers", {}).items():
-#        if data.get("enabled"):
-#            providers.append(name)
-#    return JsonResponse({"providers": providers})
-
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 
@@ -106,22 +93,3 @@ def register_profile(request):
         "email": user.email,
         "display_name": getattr(profile, "display_name", "")
     })
-
-# enable providers
-#def get_enable_providers(request):
-#    return JsonResponse(settings.OAUTH_PROVIDERS)
-
-def get_enabled_providers(request):
-    """
-    Return a list of enabled OAuth providers and their URLs for the frontend.
-    """
-    providers = []
-
-    for name, data in settings.OAUTH_PROVIDERS.items():
-        providers.append({
-            "name": name,
-            "auth_url": data.get("auth_url"),
-            "callback_url": data.get("callback_url"),
-        })
-
-    return JsonResponse({"providers": providers})

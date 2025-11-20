@@ -5,5 +5,6 @@ from django.urls import path, include
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("authif/", include("social_django.urls", namespace="social")),    # /auth/login/google/ etc.
-    path("", include("authif.urls")),                                    # our custom urls (post_login, register API)
+    path("", include("authif.urls")),
+    path("api/auth/", include("oauth.urls")),                                    
 ]

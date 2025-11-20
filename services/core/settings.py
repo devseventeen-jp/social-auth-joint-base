@@ -110,6 +110,14 @@ OAUTH_PROVIDERS = load_providers()
 # }
 
 # ------------------------------------------------------------------
+# Session and CSRF
+# ------------------------------------------------------------------
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = False  # dev: False, prod: True
+CSRF_COOKIE_SECURE = False     # dev: False
+CSRF_TRUSTED_ORIGINS = ["http://localhost:5173"]
+
+# ------------------------------------------------------------------
 # Logging configuration
 # ------------------------------------------------------------------
 LOGGING = {
@@ -131,17 +139,18 @@ LOGGING = {
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.BasicAuthentication",
+#        "rest_framework.authentication.BasicAuthentication",
     ],
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.AllowAny",
-    ],
+#    "DEFAULT_PERMISSION_CLASSES": [
+#        "rest_framework.permissions.AllowAny",
+#    ],
 }
 
 # ------------------------------------------------------------------
 # Custom constants
 # ------------------------------------------------------------------
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+# FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173/dashboard/")
 
 # ------------------------------------------------------------------
 # 

@@ -1,0 +1,10 @@
+{
+  "google": {
+    "label": "Google でログイン",
+    "order": 1
+  },
+  "facebook": {
+    "label": "Facebook でログイン",
+    "order": 2
+  }
+}
